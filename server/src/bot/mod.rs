@@ -2,9 +2,14 @@
 
 use std::io::{Read, Write};
 use std::net::TcpStream;
+use crate::common::BOT_COUNT;
 
 pub fn handle_connection(mut stream: TcpStream) {
     println!("BOT has joined!");
+    {
+        let mut count = BOT_COUNT.lock().unwrap();
+        *count += 1;
+    }
 
     let mut buffer = [0; 1024];
     loop {
@@ -18,6 +23,10 @@ pub fn handle_connection(mut stream: TcpStream) {
         };
         if size == 0 {
             println!("BOT has disconnected");
+            {
+                let mut count = BOT_COUNT.lock().unwrap();
+                *count -= 1;
+            }
             break;
         }
         // Echo everything back

