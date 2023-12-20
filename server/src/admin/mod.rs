@@ -87,6 +87,8 @@ pub fn handle_connection(mut stream: TcpStream, credentials: HashMap<String, Str
 fn handle_authenticated_session(mut stream: TcpStream, username: &str) {
     println!("{} has joined!", username);
     stream.write_all(MOTD.as_bytes()).unwrap();
+    stream.write_all(b"rustnet> ").unwrap();
+    stream.flush().expect("Failed to flush the stream");
 
     let mut buffer = [0; 1024];
     loop {
@@ -102,6 +104,7 @@ fn handle_authenticated_session(mut stream: TcpStream, username: &str) {
             println!("{} has disconnected", username);
             break;
         }
+        
         // handle commands
         let input = match std::str::from_utf8(&buffer[..size]) {
             Ok(v) => v,
@@ -119,6 +122,7 @@ fn handle_authenticated_session(mut stream: TcpStream, username: &str) {
                 // Handle unknown command
                 stream.write_all(b"Unknown command\n").expect("Failed to write to stream");
             }
+            stream.write_all(b"rustnet> ").unwrap();
         }
     }
 }
