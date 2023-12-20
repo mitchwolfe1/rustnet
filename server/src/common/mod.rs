@@ -2,15 +2,21 @@
 
 use std::net::TcpListener;
 use std::sync::{Arc, Mutex};
-
 use lazy_static::lazy_static;
+use std::collections::HashMap;
+use std::net::TcpStream;
+
 
 
 static IP_ADDR: &str = "0.0.0.0";
 
 lazy_static! {
+    pub static ref BOT_REGISTRY: Arc<Mutex<HashMap<String, Arc<Mutex<TcpStream>>>>> = Arc::new(Mutex::new(HashMap::new()));
     pub static ref BOT_COUNT: Arc<Mutex<i32>> = Arc::new(Mutex::new(0));
+    pub static ref ADMIN_COUNT: Arc<Mutex<i32>> = Arc::new(Mutex::new(0));
 }
+
+
 
 pub fn start_listeners(admin_port: i32, bot_port: i32) -> (TcpListener, TcpListener) {
     let admin_host = format!("{}:{}", IP_ADDR, &admin_port);
