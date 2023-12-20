@@ -16,12 +16,14 @@ struct Cli {
 
 fn main() {
     let args = Cli::parse();
+    let credentials = admin::load_credentials();
     let (admin_listener, bot_listener) = start_listeners(args.admin_port, args.bot_port);
 
     thread::spawn(move || {
         for stream in admin_listener.incoming() {
             if let Ok(stream) = stream {
-                thread::spawn(|| admin::handle_connection(stream));
+                let creds = credentials.clone();
+                thread::spawn(|| admin::handle_connection(stream, creds));
             }
         }
     });
