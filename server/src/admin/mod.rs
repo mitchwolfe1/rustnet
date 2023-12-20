@@ -53,6 +53,7 @@ pub fn handle_connection(mut stream: TcpStream, credentials: HashMap<String, Str
 
 pub fn handle_authenticated_session(mut stream: TcpStream, username: &str) {
     println!("{} has joined!", username);
+    stream.write_all(get_motd().as_bytes()).unwrap();
 
     let mut buffer = [0; 1024];
     loop {
@@ -68,7 +69,21 @@ pub fn handle_authenticated_session(mut stream: TcpStream, username: &str) {
             println!("{} has disconnected", username);
             break;
         }
-        // Echo everything back
+        // handle commands
         stream.write_all(&buffer[0..size]).unwrap();
     }
+}
+
+
+pub fn get_motd() -> &'static str{
+    let motd = "
+     _______           _______ _________ _        _______ _________
+    (  ____ )|\\     /|(  ____ \\\\__   __/( (    /|(  ____ \\\\__   __/
+    | (    )|| )   ( || (    \\/   ) (   |  \\  ( || (    \\/   ) (   
+    | (____)|| |   | || (_____    | |   |   \\ | || (__       | |   
+    |     __)| |   | |(_____  )   | |   | (\\ \\) ||  __)      | |   
+    | (\\ (   | |   | |      ) |   | |   | | \\   || (         | |   
+    | ) \\ \\__| (___) |/\\____) |   | |   | )  \\  || (____/\\   | |   
+    |/   \\__/(_______)\\_______)   )_(   |/    )_)(_______/   )_( \n\n\n";
+    return motd;
 }
