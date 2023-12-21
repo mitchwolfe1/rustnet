@@ -10,8 +10,10 @@ use std::net::TcpStream;
 
 static IP_ADDR: &str = "0.0.0.0";
 
+// TODO: add admin username in ADMIN_REGISTRY
 lazy_static! {
     pub static ref BOT_REGISTRY: Arc<Mutex<HashMap<String, Arc<Mutex<TcpStream>>>>> = Arc::new(Mutex::new(HashMap::new()));
+    pub static ref ADMIN_REGISTRY: Arc<Mutex<HashMap<String, Arc<Mutex<TcpStream>>>>> = Arc::new(Mutex::new(HashMap::new()));
     pub static ref BOT_COUNT: Arc<Mutex<i32>> = Arc::new(Mutex::new(0));
     pub static ref ADMIN_COUNT: Arc<Mutex<i32>> = Arc::new(Mutex::new(0));
 }

