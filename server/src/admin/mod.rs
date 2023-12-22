@@ -32,6 +32,8 @@ lazy_static! {
         m.insert("!admincount".to_string(), Box::new(AdminCountCommand) as Box<dyn CommandHandler + Send>);
         m.insert("!showbots".to_string(), Box::new(ShowBotsCommand) as Box<dyn CommandHandler + Send>);
         m.insert("!showadmins".to_string(), Box::new(ShowAdminsCommand) as Box<dyn CommandHandler + Send>);
+        m.insert("!sendmsg".to_string(), Box::new(SendMsgCommand) as Box<dyn CommandHandler + Send>);
+
         Arc::new(Mutex::new(m))
     };
 }
@@ -86,6 +88,29 @@ impl CommandHandler for ShowAdminsCommand {
         }
     }
 }
+struct SendMsgCommand;
+
+impl CommandHandler for SendMsgCommand {
+    fn handle(&self, _stream: &mut TcpStream, args: &[String]) {
+        if args.is_empty() {
+            eprintln!("No message provided for !sendmsg command");
+            return;
+        }
+        let message = args.join(" ");
+        broadcast_to_bots(&message);
+    }
+}
+
+pub fn broadcast_to_bots(message: &str) {
+    let registry = BOT_REGISTRY.lock().unwrap();
+    for (_, stream) in registry.iter() {
+        let mut stream = stream.lock().unwrap();
+        if let Err(e) = stream.write_all(message.as_bytes()) {
+            eprintln!("Failed to send message to a bot {}: {}", stream.peer_addr().unwrap().to_string(), e);
+        }
+    }
+}
+
 
 pub fn add_admin(admin_id: String, stream: TcpStream) {
     let stream = Arc::new(Mutex::new(stream));
