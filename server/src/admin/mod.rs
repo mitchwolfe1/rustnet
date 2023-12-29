@@ -105,8 +105,6 @@ impl CommandHandler for SendMsgCommand {
     }
 }
 
-
-
 struct UdpFloodCommand;
 impl CommandHandler for UdpFloodCommand {
     fn handle(&self, stream: &mut TcpStream, args: &[String]) {
