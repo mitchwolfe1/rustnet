@@ -96,7 +96,8 @@ impl CommandHandler for SendMsgCommand {
             eprintln!("No message provided for !sendmsg command");
             return;
         }
-        let message = args.join(" ");
+        let mut message = args.join(" ");
+        message.push('\n');
         broadcast_to_bots(&message);
     }
 }
