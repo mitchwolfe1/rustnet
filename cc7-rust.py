@@ -16,7 +16,7 @@ download_archs = input("Download architectures? Y/n: ").lower() == "y"
 # Define Rust target architectures
 rust_archs = [
     "aarch64-unknown-linux-gnu",
-    "arm-unknown-linux-gnueabihf",
+    "arm-unknown-linux-gnueabi",
     #"mips-unknown-linux-gnu",
     #"mipsel-unknown-linux-gnu", # need to figure out how to compile rust standard library for these
     "i686-unknown-linux-gnu",
