@@ -94,7 +94,7 @@ anon_max_rate=2048000
 xferlog_enable=YES
 listen_address={ip}
 listen_port=21'''
-with open("/etc/vsftpd/vsftpd-anon.conf", "w") as f:
+with open("/etc/vsftpd.conf", "w") as f:
     f.write(ftp_config)
 run("service vsftpd restart")
 
