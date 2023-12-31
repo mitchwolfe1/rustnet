@@ -36,7 +36,13 @@ if download_archs:
     print("Rust targets downloaded.")
 
 
-run("apt-get install gcc-aarch64-linux-gnu")
+# Install cross compilation tool chain
+run("apt-get install gcc-aarch64-linux-gnu -y")
+run("apt-get install gcc-arm-linux-gnueabi -y")
+run("apt-get install gcc-i686-linux-gnu -y")
+run("apt-get install gcc-x86-64-linux-gnux32 -y")
+run("apt-get install gcc-mips-linux-gnu -y")
+run("apt-get install gcc-mipsel-linux-gnu -y")
 
 # Change to Rust project directory
 os.chdir(rust_project)
