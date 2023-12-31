@@ -35,6 +35,9 @@ if download_archs:
         run(f"rustup target add {arch}")
     print("Rust targets downloaded.")
 
+
+run("apt-get install gcc-aarch64-linux-gnu")
+
 # Change to Rust project directory
 os.chdir(rust_project)
 
