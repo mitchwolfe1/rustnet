@@ -10,6 +10,9 @@ if len(sys.argv) < 3:
 
 rust_project = sys.argv[1]
 ip = sys.argv[2]
+def run(cmd):
+    subprocess.call(cmd, shell=True)
+
 
 download_archs = input("Download architectures? Y/n: ").lower() == "y"
 
@@ -23,18 +26,8 @@ rust_archs = [
     "x86_64-unknown-linux-gnu",
 ]
 
-def run(cmd):
-    subprocess.call(cmd, shell=True)
-
 # Remove existing binaries
 run("rm -rf /var/www/html/* /var/lib/tftpboot/* /var/ftp/*")
-
-if download_archs:
-    print("Downloading Rust target architectures")
-    for arch in rust_archs:
-        run(f"rustup target add {arch}")
-    print("Rust targets downloaded.")
-
 
 # Install cross compilation tool chain
 run("apt-get install gcc-aarch64-linux-gnu -y")
@@ -43,6 +36,13 @@ run("apt-get install gcc-i686-linux-gnu -y")
 run("apt-get install gcc-x86-64-linux-gnux32 -y")
 run("apt-get install gcc-mips-linux-gnu -y")
 run("apt-get install gcc-mipsel-linux-gnu -y")
+
+if download_archs:
+    print("Downloading Rust target architectures")
+    for arch in rust_archs:
+        run(f"rustup target add {arch}")
+    print("Rust targets downloaded.")
+
 
 # Change to Rust project directory
 os.chdir(rust_project)
@@ -54,9 +54,10 @@ for arch in rust_archs:
 print("Cross compiling done. Setting up servers...")
 
 # Server setup for Ubuntu
+run("apt-get install gcc -y")
 run("apt-get install apache2 -y")
 run("service apache2 start")
-run("apt-get install xinetd tftpd tftp tftp-server -y")
+run("apt-get install xinetd tftpd tftp -y")
 run("apt-get install vsftpd -y")
 run("service vsftpd start")
 
