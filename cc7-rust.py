@@ -56,7 +56,7 @@ print("Cross compiling done. Setting up servers...")
 # Server setup for Ubuntu
 run("apt-get install apache2 -y")
 run("service apache2 start")
-run("apt-get install xinetd tftpd tftp -y")
+run("apt-get install xinetd tftpd tftp tftp-server -y")
 run("apt-get install vsftpd -y")
 run("service vsftpd start")
 
@@ -132,11 +132,6 @@ for arch in rust_archs:
 
 run("chmod +x /var/www/html/bins.sh")
 
-# Setup tftp1.sh, tftp2.sh, and ftp1.sh
-for script_name in ["tftp1.sh", "tftp2.sh", "ftp1.sh"]:
-    run(f'echo "#!/bin/bash" > /var/lib/tftpboot/{script_name}')
-    run(f'echo "ulimit -n 1024" >> /var/lib/tftpboot/{script_name}')
-    run(f'echo "cp /bin/busybox /tmp/" >> /var/lib/tftpboot/{script_name}')
 
 run("service xinetd restart")
 run("service apache2 restart")
