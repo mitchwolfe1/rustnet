@@ -139,7 +139,7 @@ for script_name in ["tftp1.sh", "tftp2.sh", "ftp1.sh"]:
     run(f'echo "cp /bin/busybox /tmp/" >> /var/lib/tftpboot/{script_name}')
 
 run("service xinetd restart")
-run("service httpd restart")
+run("service apache2 restart")
 run('echo "ulimit -n 99999" >> ~/.bashrc')
 
 print("\x1b[0;32mSuccessfully cross compiled and set up servers!\x1b[0m")
