@@ -1,6 +1,5 @@
 use std::net::{TcpStream, Shutdown};
-use std::io::{Read, Write};
-use std::time::Duration;
+use std::io::{Read};
 use serde_json::{Value, from_str};
 use std::net::UdpSocket;
 use std::{time, thread};
