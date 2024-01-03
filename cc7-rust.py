@@ -60,6 +60,12 @@ run("apt-get install xinetd tftpd tftp -y")
 run("apt-get install vsftpd -y")
 run("service vsftpd start")
 
+run("mkdir /var/lib/tftpboot")
+run("chmod -R 777 /var/lib/tftpboot")
+run("sudo chown -R nobody /var/lib/tftpboot")
+
+
+
 # TFTP server configuration
 tftp_config = '''# default: off
 # description: The tftp server serves files using the trivial file transfer \
@@ -83,6 +89,8 @@ service tftp
 with open("/etc/xinetd.d/tftp", "w") as f:
     f.write(tftp_config)
 run("service xinetd start")
+
+run("mkdir /var/ftp")
 
 # FTP server configuration
 ftp_config = f'''listen=YES
