@@ -9,7 +9,7 @@ Install rust and cargo:
 Configure current shell: ```source "$HOME/.cargo/env"```
 
 Install/Configure dependencies and run cross-compilation: 
-```python3 cc7-rust.py client/ <IP_ADDR>```
+```python3 cc7-rust.py client/ <IP_ADDR> <BOT_PORT>```
 
 Add new credential line in `server/admin.txt` in the format of `username:pass`
 
