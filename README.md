@@ -11,3 +11,8 @@ Configure current shell: ```source "$HOME/.cargo/env"```
 Install/Configure dependencies and run cross-compilation: 
 ```python3 cc7-rust.py client/ <IP_ADDR>```
 
+Add new credential line in `server/admin.txt` in the format of `username:pass`
+
+Build server: ```cd server/ && cargo build --release```
+
+Run server: ```./target/release/server <ADMIN_PORT> <BOT_PORT>```
