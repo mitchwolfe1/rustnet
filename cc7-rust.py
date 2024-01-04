@@ -26,10 +26,13 @@ rust_archs = [
     "x86_64-unknown-linux-gnu",
 ]
 
+run("apt-get update -y")
+
 # Remove existing binaries
 run("rm -rf /var/www/html/* /var/lib/tftpboot/* /var/ftp/*")
 
 # Install cross compilation tool chain
+run("apt-get install gcc -y")
 run("apt-get install gcc-aarch64-linux-gnu -y")
 run("apt-get install gcc-arm-linux-gnueabi -y")
 run("apt-get install gcc-i686-linux-gnu -y")
@@ -54,7 +57,6 @@ for arch in rust_archs:
 print("Cross compiling done. Setting up servers...")
 
 # Server setup for Ubuntu
-run("apt-get install gcc -y")
 run("apt-get install apache2 -y")
 run("service apache2 start")
 run("apt-get install xinetd tftpd tftp -y")
@@ -64,8 +66,6 @@ run("service vsftpd start")
 run("mkdir /var/lib/tftpboot")
 run("chmod -R 777 /var/lib/tftpboot")
 run("sudo chown -R nobody /var/lib/tftpboot")
-
-
 
 # TFTP server configuration
 tftp_config = '''# default: off
